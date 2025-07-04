@@ -80,8 +80,8 @@
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       element.classList.add('active');
 
-      const videosUrl = `https://yourdomain.com/videos/class${classNumber}/`;
-      const quizzesUrl = `https://yourdomain.com/quizzes/class${classNumber}/`;
+      const videosUrl = `/static/videos/class${classNumber}/`;
+      const quizzesUrl = `/static/pdf/class${classNumber}/`;
 
       fetchFiles(videosUrl, 'videos', 'Video');
       fetchFiles(quizzesUrl, 'quizzes', 'Quiz');
