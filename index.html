@@ -156,21 +156,38 @@
         }
 
         .pdf-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border: 2px solid #dee2e6;
+        }
+
+        .pdf-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .pdf-placeholder {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 120px;
+            height: 100%;
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            border-radius: 8px;
-            margin-bottom: 15px;
             color: white;
             font-size: 1.2rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            border-radius: 8px;
         }
 
-        .pdf-container:hover {
+        .pdf-placeholder:hover {
             transform: scale(1.02);
             box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
         }
@@ -186,24 +203,6 @@
             color: #7f8c8d;
             font-size: 0.9rem;
             line-height: 1.4;
-        }
-
-        .upload-info {
-            background: rgba(52, 152, 219, 0.1);
-            border-left: 4px solid #3498db;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-        .upload-info h3 {
-            color: #2980b9;
-            margin-bottom: 10px;
-        }
-
-        .upload-info p {
-            color: #34495e;
-            margin-bottom: 8px;
         }
 
         .loading-spinner {
@@ -262,14 +261,6 @@
             <h1 class="school-name">Chinmaya Vidyalaya Senior Secondary School</h1>
             <p class="school-address">Virugambakkam, Chennai-92</p>
             <h2 class="page-title">Primary Co-curricular Activities</h2>
-        </div>
-
-        <div class="upload-info">
-            <h3>📁 Content Organization</h3>
-            <p><strong>Videos:</strong> Place video files in folders named "class1", "class2", etc. within a "videos" directory</p>
-            <p><strong>PDFs:</strong> Place PDF files in folders named "class1", "class2", etc. within a "pdf" directory</p>
-            <p><strong>Supported formats:</strong> MP4, WebM, MOV for videos | PDF for documents</p>
-            <p><strong>Repository:</strong> Files are automatically loaded from GitHub repository</p>
         </div>
 
         <div class="content-section">
@@ -348,7 +339,6 @@
             </div>
             
             <div id="pdfs-5" class="content-grid">
-                <div class="content-grid">
                 <div class="content-card">
                     <div class="loading-spinner">🔄 Loading PDFs...</div>
                 </div>
@@ -400,12 +390,16 @@
             `;
         }
         
-        // Function to create PDF element
+        // Function to create PDF element that displays inline
         function createPDFElement(file) {
             const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
             return `
-                <div class="pdf-container" onclick="window.open('${pdfUrl}', '_blank')">
-                    📄 Click to Open PDF
+                <div class="pdf-container">
+                    <iframe src="${pdfUrl}" class="pdf-iframe" title="PDF Document">
+                        <div class="pdf-placeholder" onclick="window.open('${pdfUrl}', '_blank')">
+                            📄 Click to Open PDF
+                        </div>
+                    </iframe>
                 </div>
             `;
         }
@@ -433,7 +427,7 @@
                 container.innerHTML = `
                     <div class="content-card">
                         <div class="${type === 'videos' ? 'video-container' : 'pdf-container'}">
-                            <div class="${type === 'videos' ? 'video-placeholder' : ''}">
+                            <div class="${type === 'videos' ? 'video-placeholder' : 'pdf-placeholder'}">
                                 ${type === 'videos' ? '🎬 No videos found for Class ' + classNum : '📄 No PDFs found for Class ' + classNum}
                             </div>
                         </div>
