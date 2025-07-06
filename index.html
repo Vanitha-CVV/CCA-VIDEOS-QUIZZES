@@ -158,7 +158,7 @@
         .pdf-container {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 250px;
             background: #f8f9fa;
             border-radius: 8px;
             margin-bottom: 15px;
@@ -190,6 +190,39 @@
         .pdf-placeholder:hover {
             transform: scale(1.02);
             box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .pdf-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pdf-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .pdf-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .pdf-btn.download {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+
+        .pdf-btn.download:hover {
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
         }
 
         .card-title {
@@ -390,18 +423,66 @@
             `;
         }
         
-   function createPDFElement(file) {
-    const rawPdfPath = `${file.path}`; // relative path inside repo
-    const localViewer = `pdfjs/viewer.html?file=${encodeURIComponent('/' + rawPdfPath)}`;
-
-    return `
-        <div class="pdf-container">
-            <iframe src="${localViewer}" class="pdf-iframe" allowfullscreen></iframe>
-        </div>
-    `;
-}
-
-
+        // SOLUTION 1: Using Google Drive Viewer (Recommended)
+        function createPDFElement(file) {
+            const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
+            const encodedUrl = encodeURIComponent(pdfUrl);
+            
+            return `
+                <div class="pdf-container">
+                    <iframe src="https://docs.google.com/gview?url=${encodedUrl}&embedded=true" 
+                            class="pdf-iframe" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="pdf-actions">
+                    <a href="${pdfUrl}" class="pdf-btn download" download>📥 Download</a>
+                    <a href="${pdfUrl}" class="pdf-btn" target="_blank">🔗 Open in New Tab</a>
+                </div>
+            `;
+        }
+        
+        // SOLUTION 2: Using Mozilla PDF.js (Alternative)
+        /*
+        function createPDFElement(file) {
+            const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
+            const encodedUrl = encodeURIComponent(pdfUrl);
+            
+            return `
+                <div class="pdf-container">
+                    <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodedUrl}" 
+                            class="pdf-iframe" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="pdf-actions">
+                    <a href="${pdfUrl}" class="pdf-btn download" download>📥 Download</a>
+                    <a href="${pdfUrl}" class="pdf-btn" target="_blank">🔗 Open in New Tab</a>
+                </div>
+            `;
+        }
+        */
+        
+        // SOLUTION 3: Using PDF.js via CDN (Another Alternative)
+        /*
+        function createPDFElement(file) {
+            const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
+            const encodedUrl = encodeURIComponent(pdfUrl);
+            
+            return `
+                <div class="pdf-container">
+                    <iframe src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/web/viewer.html?file=${encodedUrl}" 
+                            class="pdf-iframe" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="pdf-actions">
+                    <a href="${pdfUrl}" class="pdf-btn download" download>📥 Download</a>
+                    <a href="${pdfUrl}" class="pdf-btn" target="_blank">🔗 Open in New Tab</a>
+                </div>
+            `;
+        }
+        */
         
         // Function to load content for a specific class
         async function loadClassContent(type, classNum) {
