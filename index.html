@@ -391,18 +391,17 @@
         }
         
         // Function to create PDF element that displays inline
-        function createPDFElement(file) {
-            const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
-            return `
-                <div class="pdf-container">
-                    <iframe src="${pdfUrl}" class="pdf-iframe" title="PDF Document">
-                        <div class="pdf-placeholder" onclick="window.open('${pdfUrl}', '_blank')">
-                            📄 Click to Open PDF
-                        </div>
-                    </iframe>
-                </div>
-            `;
-        }
+    function createPDFElement(file) {
+        const rawPdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
+        const pdfViewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}`;
+    
+        return `
+            <div class="pdf-container">
+                <iframe src="${pdfViewerUrl}" class="pdf-iframe" title="PDF Viewer" allowfullscreen></iframe>
+            </div>
+        `;
+    }
+
         
         // Function to load content for a specific class
         async function loadClassContent(type, classNum) {
