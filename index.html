@@ -390,17 +390,17 @@
             `;
         }
         
-        // Function to create PDF element that displays inline
-    function createPDFElement(file) {
-        const rawPdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
-        const pdfViewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}`;
-    
-        return `
-            <div class="pdf-container">
-                <iframe src="${pdfViewerUrl}" class="pdf-iframe" title="PDF Viewer" allowfullscreen></iframe>
-            </div>
-        `;
-    }
+   function createPDFElement(file) {
+    const rawPdfPath = `${file.path}`; // relative path inside repo
+    const localViewer = `pdfjs/viewer.html?file=${encodeURIComponent('/' + rawPdfPath)}`;
+
+    return `
+        <div class="pdf-container">
+            <iframe src="${localViewer}" class="pdf-iframe" allowfullscreen></iframe>
+        </div>
+    `;
+}
+
 
         
         // Function to load content for a specific class
