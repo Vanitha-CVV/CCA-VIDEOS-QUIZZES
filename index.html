@@ -556,7 +556,7 @@
             }
         }
         
-        // Modified showContent function with better error handling
+        // FIXED: Modified showContent function to handle tabs independently
         async function showContent(type, classNum) {
             try {
                 // Hide all content grids of the same type
@@ -565,20 +565,25 @@
                     grid.classList.remove('active');
                 });
                 
-                // Remove active class from all tabs in the same section
-                const allTabs = document.querySelectorAll('.class-tab');
-                allTabs.forEach(tab => {
-                    if (tab.textContent.includes(`Class ${classNum}`)) {
-                        const section = tab.closest('.content-section');
-                        const sectionTabs = section.querySelectorAll('.class-tab');
-                        sectionTabs.forEach(sTab => sTab.classList.remove('active'));
-                        tab.classList.add('active');
-                    }
-                });
-                
-                // Show the selected content grid
+                // Find the current section and update only its tabs
                 const targetGrid = document.getElementById(`${type}-${classNum}`);
                 if (targetGrid) {
+                    // Find the parent section
+                    const parentSection = targetGrid.closest('.content-section');
+                    if (parentSection) {
+                        // Remove active class from all tabs in THIS section only
+                        const sectionTabs = parentSection.querySelectorAll('.class-tab');
+                        sectionTabs.forEach(tab => tab.classList.remove('active'));
+                        
+                        // Add active class to the clicked tab in THIS section
+                        sectionTabs.forEach(tab => {
+                            if (tab.textContent.includes(`Class ${classNum}`)) {
+                                tab.classList.add('active');
+                            }
+                        });
+                    }
+                    
+                    // Show the selected content grid
                     targetGrid.classList.add('active');
                     
                     // Load content if not already loaded
