@@ -410,17 +410,80 @@
             }
         }
         
-        // Function to create video element
+        // Function to extract YouTube video ID from URL
+        function getYouTubeID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+        
+        // Function to create YouTube embed element
+        function createYouTubeElement(title, url) {
+            const videoId = getYouTubeID(url);
+            if (!videoId) return '';
+            
+            return `
+                <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; margin-bottom: 15px;">
+                    <iframe 
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 8px;"
+                        src="https://www.youtube.com/embed/${videoId}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            `;
+        }
+        
+        // Function to create local video element
         function createVideoElement(file) {
             const videoUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
             return `
-                <video controls style="width: 100%; height: 200px; border-radius: 8px; background: #000;">
+                <video controls style="width: 100%; height: 200px; border-radius: 8px; background: #000; margin-bottom: 15px;">
                     <source src="${videoUrl}" type="video/mp4">
                     <source src="${videoUrl}" type="video/webm">
                     <source src="${videoUrl}" type="video/mov">
                     Your browser does not support the video tag.
                 </video>
             `;
+        }
+        
+        // Function to fetch and parse YouTube links from text file
+        async function fetchYouTubeLinks(classNum) {
+            try {
+                const path = `static/videos/class${classNum}/youtube-links.txt`;
+                const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
+                
+                console.log(`Fetching YouTube links from: ${url}`);
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const text = await response.text();
+                    const links = [];
+                    
+                    // Parse each line: "Title | URL"
+                    const lines = text.split('\n').filter(line => line.trim());
+                    
+                    for (const line of lines) {
+                        const parts = line.split('|').map(s => s.trim());
+                        if (parts.length === 2 && (parts[1].includes('youtube.com') || parts[1].includes('youtu.be'))) {
+                            links.push({
+                                title: parts[0],
+                                url: parts[1]
+                            });
+                        }
+                    }
+                    
+                    console.log(`Found ${links.length} YouTube links for Class ${classNum}`);
+                    return links;
+                } else {
+                    console.log(`No YouTube links file found for Class ${classNum}`);
+                    return [];
+                }
+            } catch (error) {
+                console.log(`No YouTube links available for Class ${classNum}`);
+                return [];
+            }
         }
         
         // SOLUTION 1: Using Google Drive Viewer (Recommended)
@@ -442,48 +505,6 @@
             `;
         }
         
-        // SOLUTION 2: Using Mozilla PDF.js (Alternative)
-        /*
-        function createPDFElement(file) {
-            const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
-            const encodedUrl = encodeURIComponent(pdfUrl);
-            
-            return `
-                <div class="pdf-container">
-                    <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodedUrl}" 
-                            class="pdf-iframe" 
-                            allowfullscreen>
-                    </iframe>
-                </div>
-                <div class="pdf-actions">
-                    <a href="${pdfUrl}" class="pdf-btn download" download>📥 Download</a>
-                    <a href="${pdfUrl}" class="pdf-btn" target="_blank">🔗 Open in New Tab</a>
-                </div>
-            `;
-        }
-        */
-        
-        // SOLUTION 3: Using PDF.js via CDN (Another Alternative)
-        /*
-        function createPDFElement(file) {
-            const pdfUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
-            const encodedUrl = encodeURIComponent(pdfUrl);
-            
-            return `
-                <div class="pdf-container">
-                    <iframe src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/web/viewer.html?file=${encodedUrl}" 
-                            class="pdf-iframe" 
-                            allowfullscreen>
-                    </iframe>
-                </div>
-                <div class="pdf-actions">
-                    <a href="${pdfUrl}" class="pdf-btn download" download>📥 Download</a>
-                    <a href="${pdfUrl}" class="pdf-btn" target="_blank">🔗 Open in New Tab</a>
-                </div>
-            `;
-        }
-        */
-        
         // Function to load content for a specific class
         async function loadClassContent(type, classNum) {
             // Fixed path mapping: use "pdf" for PDFs and "videos" for videos
@@ -491,8 +512,6 @@
             const path = `static/${folderName}/class${classNum}`;
             
             console.log(`Loading content for ${type} class ${classNum} from path: ${path}`);
-            
-            const files = await fetchGitHubFiles(path);
             
             const container = document.getElementById(`${type}-${classNum}`);
             if (!container) {
@@ -503,56 +522,118 @@
             // Clear existing content
             container.innerHTML = '';
             
-            if (files.length === 0) {
-                container.innerHTML = `
-                    <div class="content-card">
-                        <div class="${type === 'videos' ? 'video-container' : 'pdf-container'}">
-                            <div class="${type === 'videos' ? 'video-placeholder' : 'pdf-placeholder'}">
-                                ${type === 'videos' ? '🎬 No videos found for Class ' + classNum : '📄 No PDFs found for Class ' + classNum}
-                            </div>
-                        </div>
-                        <div class="card-title">No Content Available</div>
-                        <div class="card-description">Please upload ${type === 'videos' ? 'videos' : 'PDFs'} to the class${classNum} folder</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Create content cards for each file
-            files.forEach(file => {
-                if (file.type === 'file') {
-                    const isVideo = file.name.match(/\.(mp4|webm|mov|avi)$/i);
-                    const isPDF = file.name.match(/\.pdf$/i);
-                    
-                    if ((type === 'videos' && isVideo) || (type === 'pdfs' && isPDF)) {
+            // For videos, fetch both local files and YouTube links
+            if (type === 'videos') {
+                const [files, youtubeLinks] = await Promise.all([
+                    fetchGitHubFiles(path),
+                    fetchYouTubeLinks(classNum)
+                ]);
+                
+                let hasContent = false;
+                
+                // Add YouTube videos first
+                if (youtubeLinks.length > 0) {
+                    hasContent = true;
+                    youtubeLinks.forEach(link => {
                         const card = document.createElement('div');
                         card.className = 'content-card';
-                        
-                        const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
-                        const formattedName = fileName.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        
                         card.innerHTML = `
-                            ${type === 'videos' ? createVideoElement(file) : createPDFElement(file)}
-                            <div class="card-title">${formattedName}</div>
-                            <div class="card-description">Class ${classNum} - ${type === 'videos' ? 'Activity Video' : 'Study Material'}</div>
+                            ${createYouTubeElement(link.title, link.url)}
+                            <div class="card-title">📺 ${link.title}</div>
+                            <div class="card-description">Class ${classNum} - YouTube Video</div>
                         `;
-                        
                         container.appendChild(card);
-                    }
+                    });
                 }
-            });
-            
-            // If no matching files were found
-            if (container.children.length === 0) {
-                container.innerHTML = `
-                    <div class="content-card">
-                        <div class="error-message">
-                            No ${type === 'videos' ? 'video' : 'PDF'} files found in the repository.
+                
+                // Add local video files
+                files.forEach(file => {
+                    if (file.type === 'file' && file.name !== 'youtube-links.txt') {
+                        const isVideo = file.name.match(/\.(mp4|webm|mov|avi)$/i);
+                        
+                        if (isVideo) {
+                            hasContent = true;
+                            const card = document.createElement('div');
+                            card.className = 'content-card';
+                            
+                            const fileName = file.name.replace(/\.[^/.]+$/, "");
+                            const formattedName = fileName.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            
+                            card.innerHTML = `
+                                ${createVideoElement(file)}
+                                <div class="card-title">🎬 ${formattedName}</div>
+                                <div class="card-description">Class ${classNum} - Local Video</div>
+                            `;
+                            container.appendChild(card);
+                        }
+                    }
+                });
+                
+                if (!hasContent) {
+                    container.innerHTML = `
+                        <div class="content-card">
+                            <div class="video-container">
+                                <div class="video-placeholder">
+                                    🎬 No videos found for Class ${classNum}
+                                </div>
+                            </div>
+                            <div class="card-title">No Content Available</div>
+                            <div class="card-description">Upload videos or add YouTube links to youtube-links.txt</div>
                         </div>
-                        <div class="card-title">Upload Required</div>
-                        <div class="card-description">Please upload ${type === 'videos' ? 'MP4/WebM/MOV' : 'PDF'} files to the class${classNum} folder</div>
-                    </div>
-                `;
+                    `;
+                }
+            } 
+            // For PDFs, load as before
+            else {
+                const files = await fetchGitHubFiles(path);
+                
+                if (files.length === 0) {
+                    container.innerHTML = `
+                        <div class="content-card">
+                            <div class="pdf-container">
+                                <div class="pdf-placeholder">
+                                    📄 No PDFs found for Class ${classNum}
+                                </div>
+                            </div>
+                            <div class="card-title">No Content Available</div>
+                            <div class="card-description">Please upload PDFs to the class${classNum} folder</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                files.forEach(file => {
+                    if (file.type === 'file') {
+                        const isPDF = file.name.match(/\.pdf$/i);
+                        
+                        if (isPDF) {
+                            const card = document.createElement('div');
+                            card.className = 'content-card';
+                            
+                            const fileName = file.name.replace(/\.[^/.]+$/, "");
+                            const formattedName = fileName.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            
+                            card.innerHTML = `
+                                ${createPDFElement(file)}
+                                <div class="card-title">${formattedName}</div>
+                                <div class="card-description">Class ${classNum} - Study Material</div>
+                            `;
+                            container.appendChild(card);
+                        }
+                    }
+                });
+                
+                if (container.children.length === 0) {
+                    container.innerHTML = `
+                        <div class="content-card">
+                            <div class="error-message">
+                                No PDF files found in the repository.
+                            </div>
+                            <div class="card-title">Upload Required</div>
+                            <div class="card-description">Please upload PDF files to the class${classNum} folder</div>
+                        </div>
+                    `;
+                }
             }
         }
         
